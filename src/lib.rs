@@ -139,5 +139,35 @@ impl PlayerInfoContract{
         //encoded u64 to u256 for displaying purposes
         Ok(U256::from(player_info.total_matches.get()))
     }
+
+    //get an address's total matches
+    fn get_total_matches_by_address(&self, player_address: Address) -> Result<U256, Vec<u8>>{
+        let player_info = self.player_info.get(player_address);
+        if !player_info.exists.get(){
+            return Err("Player does not exist".into());
+        }
+        //encoded u64 to u256 for displaying purposes
+        Ok(U256::from(player_info.total_matches.get()))
+    }
+
+    //get player's winning matches
+    fn get_winning_matches(&self) -> Result<U256, Vec<u8>>{
+        let player_info = self.player_info.get(msg::sender());
+        if !player_info.exists.get(){
+            return Err("Player does not exist".into());
+        }
+        //encoded u64 to u256 for displaying purposes
+        Ok(U256::from(player_info.winning_matches.get()))
+    }
+
+    //get an address's winning matches
+    fn get_winning_matches_by_address(&self, player_address: Address) -> Result<U256, Vec<u8>>{
+        let player_info = self.player_info.get(player_address);
+        if !player_info.exists.get(){
+            return Err("Player does not exist".into());
+        }
+        //encoded u64 to u256 for displaying purposes
+        Ok(U256::from(player_info.winning_matches.get()))
+    }
 }
 
