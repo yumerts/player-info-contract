@@ -169,5 +169,68 @@ impl PlayerInfoContract{
         //encoded u64 to u256 for displaying purposes
         Ok(U256::from(player_info.winning_matches.get()))
     }
+
+    //update prediction stats stqrting from here
+    fn add_prediction_results(&mut self, player_address: Address, was_won: bool) -> Result<(), Vec<u8>>{
+        if self.prediction_contract.get() != msg::sender(){
+            return Err("Only the prediction contract can update prediction results".into());
+        }
+        let player_info = self.player_info.get(player_address);
+        if !player_info.exists.get(){
+            return Err("Player does not exist".into());
+        }
+        
+        let player_total_predictions = player_info.total_predictions.get();
+        let player_winning_predictions = player_info.winning_predictions.get();
+
+        let mut player_info_setter = self.player_info.setter(player_address);
+        player_info_setter.total_predictions.set(player_total_predictions + U64::from(1));
+
+        if was_won {
+            player_info_setter.winning_predictions.set(player_winning_predictions + U64::from(1));
+        }
+
+        Ok(())
+    }
+
+    //get player's total predictions
+    fn get_total_predictions(&self) -> Result<U256, Vec<u8>>{
+        let player_info = self.player_info.get(msg::sender());
+        if !player_info.exists.get(){
+            return Err("Player does not exist".into());
+        }
+        //encoded u64 to u256 for displaying purposes
+        Ok(U256::from(player_info.total_predictions.get()))
+    }
+
+    //get an address's total predictions
+    fn get_total_predictions_by_address(&self, player_address: Address) -> Result<U256, Vec<u8>>{
+        let player_info = self.player_info.get(player_address);
+        if !player_info.exists.get(){
+            return Err("Player does not exist".into());
+        }
+        //encoded u64 to u256 for displaying purposes
+        Ok(U256::from(player_info.total_predictions.get()))
+    }
+
+    //get player's winning predictions
+    fn get_winning_predictions(&self) -> Result<U256, Vec<u8>>{
+        let player_info = self.player_info.get(msg::sender());
+        if !player_info.exists.get(){
+            return Err("Player does not exist".into());
+        }
+        //encoded u64 to u256 for displaying purposes
+        Ok(U256::from(player_info.winning_predictions.get()))
+    }
+
+    //get an address's winning predictions
+    fn get_winning_predictions_by_address(&self, player_address: Address) -> Result<U256, Vec<u8>>{
+        let player_info = self.player_info.get(player_address);
+        if !player_info.exists.get(){
+            return Err("Player does not exist".into());
+        }
+        //encoded u64 to u256 for displaying purposes
+        Ok(U256::from(player_info.winning_predictions.get()))
+    }
 }
 
