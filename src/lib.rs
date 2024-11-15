@@ -7,9 +7,8 @@
 #![cfg_attr(not(feature = "export-abi"), no_main)]
 extern crate alloc;
 
-use alloy_primitives::Address;
-/// Import items from the SDK. The prelude contains common traits and macros.
-use stylus_sdk::{alloy_primitives::U256, msg, prelude::*, storage::{StorageAddress, StorageBool, StorageMap, StorageString, StorageU64}};
+use alloy_primitives::{Address, U256, U64};
+use stylus_sdk::{msg, prelude::*, storage::{StorageAddress, StorageBool, StorageMap, StorageString, StorageU64}};
 
 #[storage]
 pub struct PlayerInfo{
@@ -108,5 +107,37 @@ impl PlayerInfoContract{
         Ok(player_info.display_name.get_string())
     }
 
+    //update match results (only allow the matchmaking contract to do it)
+    fn add_match_results(&mut self, player_address: Address, was_won: bool) -> Result<(), Vec<u8>>{
+        if self.matchmaking_contract.get() != msg::sender(){
+            return Err("Only the matchmaking contract can update match results".into());
+        }
+        let player_info = self.player_info.get(player_address);
+        if !player_info.exists.get(){
+            return Err("Player does not exist".into());
+        }
+        
+        let player_total_matches = player_info.total_matches.get();
+        let player_winning_matches = player_info.winning_matches.get();
+
+        let mut player_info_setter = self.player_info.setter(player_address);
+        player_info_setter.total_matches.set(player_total_matches + U64::from(1));
+
+        if was_won {
+            player_info_setter.winning_matches.set(player_winning_matches + U64::from(1));
+        }
+
+        Ok(())
+    }
+
+    //get player's total matches
+    fn get_total_matches(&self) -> Result<U256, Vec<u8>>{
+        let player_info = self.player_info.get(msg::sender());
+        if !player_info.exists.get(){
+            return Err("Player does not exist".into());
+        }
+        //encoded u64 to u256 for displaying purposes
+        Ok(U256::from(player_info.total_matches.get()))
+    }
 }
 
