@@ -108,24 +108,32 @@ impl PlayerInfoContract{
     }
 
     //update match results (only allow the matchmaking contract to do it)
-    fn add_match_results(&mut self, player_address: Address, was_won: bool) -> Result<(), Vec<u8>>{
+    fn add_match_results(&mut self, winner_address: Address, loser_address: Address) -> Result<(), Vec<u8>>{
         if self.matchmaking_contract.get() != msg::sender(){
             return Err("Only the matchmaking contract can update match results".into());
         }
-        let player_info = self.player_info.get(player_address);
-        if !player_info.exists.get(){
-            return Err("Player does not exist".into());
+
+        let winner_player_info = self.player_info.get(winner_address);
+        if !winner_player_info.exists.get(){
+            return Err("Winner Player does not exist".into());
+        }
+
+        let loser_player_info = self.player_info.get(loser_address);
+        if !loser_player_info.exists.get(){
+            return Err("Loser Player does not exist".into());
         }
         
-        let player_total_matches = player_info.total_matches.get();
-        let player_winning_matches = player_info.winning_matches.get();
+        let winner_player_total_matches = winner_player_info.total_matches.get();
+        let loser_player_total_matches = loser_player_info.total_matches.get();
 
-        let mut player_info_setter = self.player_info.setter(player_address);
-        player_info_setter.total_matches.set(player_total_matches + U64::from(1));
+        let winner_player_winning_matches = winner_player_info.winning_matches.get();
 
-        if was_won {
-            player_info_setter.winning_matches.set(player_winning_matches + U64::from(1));
-        }
+        let mut winner_player_info_setter = self.player_info.setter(winner_address);
+        winner_player_info_setter.total_matches.set(winner_player_total_matches + U64::from(1));
+        winner_player_info_setter.winning_matches.set(winner_player_winning_matches + U64::from(1));
+
+        let mut loser_player_info_setter = self.player_info.setter(loser_address);
+        loser_player_info_setter.total_matches.set(loser_player_total_matches + U64::from(1));
 
         Ok(())
     }
