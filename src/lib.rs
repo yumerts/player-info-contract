@@ -39,6 +39,7 @@ impl PlayerInfoContract{
         if initialized{
             return Err("Contract has already been initialized".into());
         }
+        self.initialized.set(true);
         self.owner.set(msg::sender());
         Ok(())
     }
