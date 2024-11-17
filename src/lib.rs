@@ -77,12 +77,19 @@ impl PlayerInfoContract{
         player_info_setter.display_name.set_str(msg::sender().to_string());
         Ok(())
     }
+
+    fn register_player_with_address(&mut self, player_address: Address) -> Result<(), Vec<u8>>{
+        let mut player_info_setter =  self.player_info.setter(player_address);
+        player_info_setter.exists.set(true);
+        player_info_setter.display_name.set_str(player_address.to_string());
+        Ok(())
+    }
     
     // allows the player to update their display name
     fn update_display_name(&mut self, display_name: String) -> Result<(), Vec<u8>>{
         let player_info = self.player_info.get(msg::sender());
         if !player_info.exists.get(){
-            return Err("Player does not exist".into());
+            self.register_player();
         }
         
         let mut player_info_setter = self.player_info.setter(msg::sender());
@@ -115,14 +122,7 @@ impl PlayerInfoContract{
         }
 
         let winner_player_info = self.player_info.get(winner_address);
-        if !winner_player_info.exists.get(){
-            return Err("Winner Player does not exist".into());
-        }
-
         let loser_player_info = self.player_info.get(loser_address);
-        if !loser_player_info.exists.get(){
-            return Err("Loser Player does not exist".into());
-        }
         
         let winner_player_total_matches = winner_player_info.total_matches.get();
         let loser_player_total_matches = loser_player_info.total_matches.get();
@@ -132,9 +132,11 @@ impl PlayerInfoContract{
         let mut winner_player_info_setter = self.player_info.setter(winner_address);
         winner_player_info_setter.total_matches.set(winner_player_total_matches + U64::from(1));
         winner_player_info_setter.winning_matches.set(winner_player_winning_matches + U64::from(1));
+        winner_player_info_setter.exists.set(true);
 
         let mut loser_player_info_setter = self.player_info.setter(loser_address);
         loser_player_info_setter.total_matches.set(loser_player_total_matches + U64::from(1));
+        loser_player_info_setter.exists.set(true);
 
         Ok(())
     }
@@ -185,16 +187,14 @@ impl PlayerInfoContract{
             return Err("Only the prediction contract can update prediction results".into());
         }
         let player_info = self.player_info.get(player_address);
-        if !player_info.exists.get(){
-            return Err("Player does not exist".into());
-        }
-        
+    
         let player_total_predictions = player_info.total_predictions.get();
         let player_winning_predictions = player_info.winning_predictions.get();
 
         let mut player_info_setter = self.player_info.setter(player_address);
         player_info_setter.total_predictions.set(player_total_predictions + U64::from(1));
-
+        player_info_setter.exists.set(true);
+        
         if was_won {
             player_info_setter.winning_predictions.set(player_winning_predictions + U64::from(1));
         }
